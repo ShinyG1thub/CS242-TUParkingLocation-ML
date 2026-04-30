@@ -1,0 +1,17 @@
+# Model weights and training artifacts
+*.pt
+*.pth
+*.onnx
+*.engine
+*.weights
+*.ckpt
+
+# Local datasets / generated runs
+data/
+datasets/
+runs/
+outputs/
+
+# Python cache
+__pycache__/
+*.py[cod]
