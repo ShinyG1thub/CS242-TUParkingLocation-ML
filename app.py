@@ -11,8 +11,8 @@ app = FastAPI()
 # =========================
 # โหลด YOLO จาก S3
 # =========================
-YOLO_URL = "https://cs242-tuparkinglocation-ml.s3.us-east-1.amazonaws.com/yolov8x.pt"
-YOLO_PATH = "yolov8x.pt"
+YOLO_URL = "https://cs242-tuparkinglocation-ml.s3.us-east-1.amazonaws.com/yolov8n.pt"
+YOLO_PATH = "yolov8n.pt"
 
 def download_model():
     if not os.path.exists(YOLO_PATH):

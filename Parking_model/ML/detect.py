@@ -13,7 +13,7 @@ slot_path = "slots.json"
 # 2) load model
 # =========================
 # ให้ใช้เหมือน Colab
-model = YOLO("yolov8x.pt")   # ถ้าช้า ค่อยเปลี่ยนเป็น yolov8n.pt
+model = YOLO("yolov8n.pt")   # ถ้าช้า ค่อยเปลี่ยนเป็น yolov8n.pt
 
 # =========================
 # 3) load image
