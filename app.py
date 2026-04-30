@@ -1,21 +1,7 @@
 # =========================
-# FIX PyTorch (สำคัญมาก)
-# =========================
-import torch
-from ultralytics.nn.tasks import DetectionModel
-from torch.nn.modules.container import Sequential
-from torch.nn import Conv2d, BatchNorm2d
-
-torch.serialization.add_safe_globals([
-    DetectionModel,
-    Sequential,
-    Conv2d,
-    BatchNorm2d
-])
-
-# =========================
 # Imports
 # =========================
+import torch
 from fastapi import FastAPI, UploadFile, File
 import numpy as np
 import cv2
@@ -33,7 +19,7 @@ YOLO_URL = "https://cs242-tuparkinglocation-ml.s3.us-east-1.amazonaws.com/yolov8
 YOLO_PATH = "yolov8n.pt"
 
 # =========================
-# Download model (safe + stable)
+# Download model (safe)
 # =========================
 def download_model():
     if not os.path.exists(YOLO_PATH):
@@ -50,10 +36,13 @@ def download_model():
 download_model()
 
 # =========================
-# Load model
+# Load model (FIX PyTorch 2.6+)
 # =========================
 print("Loading YOLO model...")
-model = YOLO(YOLO_PATH)
+
+with torch.serialization.safe_globals([]):
+    model = YOLO(YOLO_PATH)
+
 print("Model loaded")
 
 # =========================
