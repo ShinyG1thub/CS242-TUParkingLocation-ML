@@ -1,3 +1,7 @@
+import torch
+from ultralytics.nn.tasks import DetectionModel
+
+torch.serialization.add_safe_globals([DetectionModel])
 from fastapi import FastAPI, UploadFile, File
 import numpy as np
 import cv2
