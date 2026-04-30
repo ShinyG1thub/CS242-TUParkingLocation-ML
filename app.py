@@ -1,7 +1,21 @@
+# =========================
+# FIX PyTorch (สำคัญมาก)
+# =========================
 import torch
 from ultralytics.nn.tasks import DetectionModel
+from torch.nn.modules.container import Sequential
+from torch.nn import Conv2d, BatchNorm2d
 
-torch.serialization.add_safe_globals([DetectionModel])
+torch.serialization.add_safe_globals([
+    DetectionModel,
+    Sequential,
+    Conv2d,
+    BatchNorm2d
+])
+
+# =========================
+# Imports
+# =========================
 from fastapi import FastAPI, UploadFile, File
 import numpy as np
 import cv2
@@ -13,31 +27,49 @@ from ultralytics import YOLO
 app = FastAPI()
 
 # =========================
-# โหลด YOLO จาก S3
+# CONFIG
 # =========================
 YOLO_URL = "https://cs242-tuparkinglocation-ml.s3.us-east-1.amazonaws.com/yolov8n.pt"
 YOLO_PATH = "yolov8n.pt"
 
+# =========================
+# Download model (safe + stable)
+# =========================
 def download_model():
     if not os.path.exists(YOLO_PATH):
-        print("Downloading YOLO...")
-        r = requests.get(YOLO_URL)
+        print("Downloading YOLO model...")
+        r = requests.get(YOLO_URL, stream=True, timeout=60)
+
         with open(YOLO_PATH, "wb") as f:
-            f.write(r.content)
-        print("Done")
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+
+        print("Download complete")
 
 download_model()
 
+# =========================
+# Load model
+# =========================
+print("Loading YOLO model...")
 model = YOLO(YOLO_PATH)
+print("Model loaded")
 
 # =========================
-# โหลด slots
+# Warm-up (ลด delay request แรก)
+# =========================
+dummy = np.zeros((480, 640, 3), dtype=np.uint8)
+model(dummy)
+
+# =========================
+# Load slots
 # =========================
 with open("slots.json", "r") as f:
     slots = json.load(f)
 
 # =========================
-# utils (เอามาจาก detect.py)
+# Utils
 # =========================
 def point_in_polygon(poly, point):
     return cv2.pointPolygonTest(
@@ -91,6 +123,11 @@ def root():
     return {"status": "ML service running"}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     contents = await file.read()
@@ -100,6 +137,9 @@ async def predict(file: UploadFile = File(...)):
 
     img = cv2.resize(img, (640, 480))
 
+    # =========================
+    # YOLO detect
+    # =========================
     results = model(img, conf=0.25, verbose=False)
 
     car_boxes = []
@@ -115,6 +155,9 @@ async def predict(file: UploadFile = File(...)):
 
             car_boxes.append([bx1, by1, bx2, by2])
 
+    # =========================
+    # Parking logic
+    # =========================
     empty_count = 0
     result = []
 
